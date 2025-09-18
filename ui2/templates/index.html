@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TLS Scanner - PTPKM</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+      color: white;
+    }
+    header {
+      background: #111;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header h1 {
+      margin: 0;
+    }
+    header img {
+      height: 40px;
+    }
+    .container {
+      max-width: 900px;
+      margin: 30px auto;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      border-radius: 12px;
+    }
+    label, input, button {
+      font-size: 16px;
+    }
+    input {
+      padding: 8px;
+      width: 300px;
+      border-radius: 6px;
+      border: none;
+      margin-right: 10px;
+    }
+    button {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 6px;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #loading {
+      display: none;
+      margin-top: 10px;
+    }
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: left;
+      background-color: #222;
+    }
+    td {
+      color: #0ff;
+    }
+    footer {
+      text-align: center;
+      margin-top: 30px;
+      font-size: 14px;
+      color: #ccc;
+    }
+    #cert {
+      background: #111;
+      padding: 10px;
+      color: #0f0;
+      font-family: monospace;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      border-radius: 6px;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="/static/LOGO PTPKM-02.png" alt="Logo" />
+    <h1>TLS Scanner - PTPKM</h1>
+    <span>© 2025 PTPKM</span>
+  </header>
+
+  <div class="container">
+    <label for="hostInput">Enter Domain:Port</label>
+    <input type="text" id="hostInput" placeholder="e.g. upm.edu.my:443 #Contoh je lah tapi" />
+    <button onclick="scanTLS()">🔍 Scan</button>
+    <div id="loading">🔄 Scanning in progress...</div>
+
+    <table>
+      <tr><th>Protocol</th><td id="protocol">undefined</td></tr>
+      <tr><th>Cipher</th><td id="cipher">undefined</td></tr>
+      <tr><th>Group</th><td id="group">undefined</td></tr>
+      <tr><th>Public Key</th><td id="pubkey">undefined</td></tr>
+      <tr><th>ALPN</th><td id="alpn">undefined</td></tr>
+      <tr><th>Session Resumed</th><td id="resumed">undefined</td></tr>
+      <tr><th>Signature Algo</th><td id="sigalg">undefined</td></tr>
+      <tr><th>Subject</th><td id="subject">undefined</td></tr>
+      <tr><th>Issuer</th><td id="issuer">undefined</td></tr>
+      <tr><th>Verify Result</th><td id="verify">undefined</td></tr>
+    </table>
+
+    <h3>Server Certificate</h3>
+    <div id="cert">(No certificate)</div>
+  </div>
+
+  <footer>
+    Designed by PTPKM Cybersecurity Unit. Powered by Flask & OpenSSL.
+  </footer>
+
+  <script>
+    function scanTLS() {
+      const host = document.getElementById("hostInput").value;
+      if (!host.includes(":")) {
+        alert("Please enter host in format domain:port");
+        return;
+      }
+
+      document.getElementById("loading").style.display = "block";
+
+      fetch("/scan", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ host: host })
+      })
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("loading").style.display = "none";
+
+        document.getElementById("protocol").textContent = data.protocol || "N/A";
+        document.getElementById("cipher").textContent = data.cipher || "N/A";
+        document.getElementById("KEX group").textContent = data.group || "N/A";
+        document.getElementById("pubkey").textContent = data.public_key || "N/A";
+        document.getElementById("alpn").textContent = data.alpn || "N/A";
+        document.getElementById("resumed").textContent = data.resumed || "N/A";
+        document.getElementById("sigalg").textContent = data.signature_algo || "N/A";
+        document.getElementById("subject").textContent = data.subject || "N/A";
+        document.getElementById("issuer").textContent = data.issuer || "N/A";
+        document.getElementById("verify").textContent =
+          `${data.verify_result[0]} (${data.verify_result[1]})` || "N/A";
+
+        document.getElementById("cert").textContent =
+          data.certificate ? `-----BEGIN CERTIFICATE-----${data.certificate}-----END CERTIFICATE-----` : "(No certificate)";
+      })
+      .catch(error => {
+        console.error(error);
+        document.getElementById("loading").style.display = "none";
+        alert("Failed to fetch scan result.");
+      });
+    }
+  </script>
+</body>
+</html>
